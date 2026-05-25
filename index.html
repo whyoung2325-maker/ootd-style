@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OOTD — 穿搭小程序 MVP原型</title>
+<style>
+/* ========== 全局基础 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #F5F5F5;
+  --card: #FFFFFF;
+  --text: #222222;
+  --text-secondary: #888888;
+  --text-light: #AAAAAA;
+  --accent: #222222;
+  --border: #E8E8E8;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.10);
+  --safe-bottom: 80px;
+}
+
+body {
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ========== 页面切换 ========== */
+.page {
+  display: none;
+  min-height: 100vh;
+  padding-bottom: var(--safe-bottom);
+  animation: fadeIn 0.3s ease;
+}
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ========== 底部导航 ========== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 430px;
+  max-width: 100vw;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0 20px;
+  z-index: 100;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-item svg { width: 24px; height: 24px; stroke: var(--text-light); fill: none; stroke-width: 1.8; }
+.nav-item span { font-size: 11px; color: var(--text-light); font-weight: 500; }
+.nav-item.active svg { stroke: var(--accent); }
+.nav-item.active span { color: var(--accent); }
+
+/* ========== 通用组件 ========== */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.15s;
+  letter-spacing: 0.5px;
+}
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:active { background: var(--bg); }
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.section-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.tag {
+  display: inline-block;
+  background: var(--bg);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.tag.selected {
+  background: var(--accent);
+  color: white;
+}
+
+.mood-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+.mood-btn:active, .mood-btn.selected {
+  border-color: var(--accent);
+  background: white;
+}
+
+/* ========== 首页 — 今日提示 ========== */
+.weather-hero {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow);
+  min-height: 80px;
+}
+.weather-hero .weather-icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.weather-hero .weather-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.weather-hero .weather-info { flex: 1; }
+.weather-hero .location {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.weather-hero .temp {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  margin-top: 2px;
+}
+.weather-hero .temp-desc {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+.outfit-inspiration {
+  margin: 16px;
+}
+.outfit-inspiration .card {
+  padding: 0;
+  overflow: hidden;
+}
+.outfit-inspiration .inspiration-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.outfit-inspiration .inspiration-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.outfit-inspiration .color-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.color-score .score-bar {
+  display: flex;
+  gap: 3px;
+}
+.color-score .score-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.color-score .score-dot.filled { background: var(--accent); }
+
+.outfit-preview {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 16px;
+  justify-content: center;
+}
+.outfit-preview .item-thumb {
+  width: 100px;
+  height: 120px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+}
+.outfit-preview .item-thumb .placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  gap: 4px;
+}
+.outfit-preview .item-thumb .placeholder svg {
+  width: 32px;
+  height: 32px;
+  stroke: var(--border);
+  fill: none;
+  stroke-width: 1.2;
+}
+.outfit-preview .item-thumb .color-strip {
+  width: 100%;
+  height: 24px;
+  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+}
+.outfit-preview .item-label {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: white;
+  background: rgba(0,0,0,0.4);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.inspiration-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 20px;
+}
+.inspiration-actions .btn-primary { flex: 2; }
+.inspiration-actions .btn-secondary { flex: 1; }
+
+.alternative-outfits {
+  margin: 16px;
+}
+.alternative-outfits .alt-row {
+  display: flex;
+  gap: 12px;
+}
+.alternative-outfits .alt-card {
+  flex: 1;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.alternative-outfits .alt-card:active { transform: scale(0.97); }
+.alternative-outfits .alt-card .alt-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.alternative-outfits .alt-card .alt-items {
+  display: flex;
+  gap: 6px;
+}
+.alternative-outfits .alt-card .alt-item-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+.alternative-outfits .alt-card .alt-score {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 6px;
+}
+
+.quick-actions {
+  margin: 16px;
+  display: flex;
+  gap: 12px;
+}
+.quick-action {
+  flex: 1;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.quick-action:active { transform: scale(0.97); }
+.quick-action svg { width: 28px; height: 28px; stroke: var(--text); fill: none; stroke-width: 1.6; }
+.quick-action span { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+
+/* ========== 衣橱页 ========== */
+.wardrobe-header {
+  padding: 20px 16px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.wardrobe-header h1 { font-size: 24px; font-weight: 700; }
+.wardrobe-header .add-btn {
+  background: var(--accent);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  border: none;
+  transition: transform 0.15s;
+}
+.wardrobe-header .add-btn:active { transform: scale(0.9); }
+
+.wardrobe-stats {
+  margin: 0 16px 16px;
+  display: flex;
+  gap: 12px;
+}
+.stat-card {
+  flex: 1;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.stat-card .stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+.stat-card .stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.wardrobe-categories {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.wardrobe-categories::-webkit-scrollbar { display: none; }
+.cat-btn {
+  background: var(--card);
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+.cat-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* ===== 新衣橱布局 ===== */
+.wardrobe-cats {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+.cat-tab {
+  background: var(--card);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+.cat-tab.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.outfit-preview-zone {
+  margin: 0 16px 16px;
+}
+.preview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.preview-item {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.preview-item .preview-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-light);
+  padding: 6px 12px;
+  background: var(--bg);
+  font-weight: 500;
+}
+.preview-item .preview-content {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.preview-empty {
+  font-size: 13px;
+  color: var(--text-light);
+}
+.preview-filled {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+  height: 100%;
+}
+.preview-filled .color-block {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.preview-filled .preview-img {
+  width: 120px;
+  height: 140px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.preview-filled .preview-img svg {
+  width: 48px;
+  height: 48px;
+  stroke: var(--border);
+  fill: none;
+  stroke-width: 1.0;
+}
+.preview-filled .preview-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.wardrobe-list {
+  padding: 0 16px 16px;
+}
+.wardrobe-section {
+  margin-bottom: 20px;
+}
+.item-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.item-row::-webkit-scrollbar { display: none; }
+.item-card {
+  flex-shrink: 0;
+  width: 80px;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.item-card:active { transform: scale(0.95); }
+.item-card .item-card-img {
+  height: 70px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item-card .item-card-img svg {
+  width: 32px;
+  height: 32px;
+  stroke: var(--border);
+  fill: none;
+  stroke-width: 1.2;
+}
+.item-card .item-card-color {
+  height: 12px;
+}
+.item-card .item-card-name {
+  font-size: 11px;
+  padding: 8px 6px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.add-item-card {
+  flex-shrink: 0;
+  width: 80px;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 110px;
+  border: 1px dashed var(--border);
+}
+.add-item-card:active { transform: scale(0.95); }
+.add-item-icon {
+  width: 28px;
+  height: 28px;
+}
+.add-item-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: var(--text-light);
+  fill: none;
+  stroke-width: 2;
+}
+.add-item-text {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 6px;
+}
+
+.outfit-preview-empty {
+  padding: 32px 20px;
+  text-align: center;
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.empty-state p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.cold-list {
+  margin: 16px;
+}
+.cold-list .card { padding: 16px; }
+.cold-list .cold-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.cold-list .cold-header h3 { font-size: 15px; font-weight: 600; }
+.cold-list .cold-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cold-list .cold-item:last-child { border-bottom: none; }
+.cold-list .cold-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+.cold-list .cold-thumb .placeholder-sm {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+.cold-list .cold-thumb .placeholder-sm svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--text-light);
+  fill: none;
+  stroke-width: 1.2;
+}
+.cold-list .cold-info { flex: 1; }
+.cold-list .cold-name { font-size: 14px; font-weight: 500; }
+.cold-list .cold-wear { font-size: 12px; color: var(--text-light); }
+.cold-list .cold-action {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.wardrobe-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.grid-item {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.grid-item:active { transform: scale(0.95); }
+.grid-item .item-img {
+  height: 140px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.grid-item .item-img svg { width: 36px; height: 36px; stroke: var(--border); fill: none; stroke-width: 1.2; }
+.grid-item .item-color {
+  height: 16px;
+}
+.grid-item .item-info {
+  padding: 10px 12px;
+}
+.grid-item .item-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.grid-item .item-meta {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+/* ========== 衣橱录入页 ========== */
+.add-page-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.add-page-header .back-btn {
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.add-page-header h2 { font-size: 18px; font-weight: 600; }
+.add-page-header .skip-btn {
+  font-size: 14px;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.photo-upload {
+  margin: 16px;
+}
+.photo-upload .upload-area {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 40px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s;
+  display: block;
+}
+.photo-upload .upload-area:active { transform: scale(0.98); }
+.photo-upload .upload-area svg { width: 48px; height: 48px; stroke: var(--text-light); fill: none; stroke-width: 1.2; }
+.photo-upload .upload-area p { font-size: 14px; color: var(--text-secondary); margin-top: 12px; }
+.photo-upload .upload-area .hint { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+.form-section {
+  margin: 16px;
+}
+.form-section .card { padding: 20px; }
+.form-section .form-group {
+  margin-bottom: 20px;
+}
+.form-section .form-group:last-child { margin-bottom: 0; }
+.form-section .form-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+}
+.form-section .option-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.form-section .option-btn {
+  background: var(--bg);
+  color: var(--text-secondary);
+  padding: 10px 16px;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.form-section .option-btn.selected {
+  border-color: var(--accent);
+  background: white;
+  color: var(--text);
+}
+
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+.color-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+  justify-self: center;
+}
+.color-dot.selected {
+  border-color: var(--accent);
+  transform: scale(1.15);
+}
+
+.save-bar {
+  margin: 16px;
+  padding: 0 0 32px;
+}
+
+/* ========== OOTD 日历页 ========== */
+.ootd-header {
+  padding: 20px 16px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ootd-header h1 { font-size: 24px; font-weight: 700; }
+.ootd-header .record-btn {
+  background: var(--accent);
+  color: white;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s;
+}
+.ootd-header .record-btn:active { transform: scale(0.95); }
+
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+}
+.calendar-nav .month-label { font-size: 16px; font-weight: 600; }
+.calendar-nav .nav-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.calendar-nav .nav-arrow svg { width: 16px; height: 16px; stroke: var(--text); fill: none; stroke-width: 2; }
+
+.calendar-grid {
+  margin: 0 16px 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.calendar-weekdays span {
+  font-size: 12px;
+  color: var(--text-light);
+  font-weight: 600;
+}
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.calendar-day {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+}
+.calendar-day.empty { background: transparent; cursor: default; }
+.calendar-day.normal { background: var(--bg); color: var(--text-secondary); }
+.calendar-day.today {
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+}
+.calendar-day.has-ootd {
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 500;
+}
+.calendar-day.has-ootd::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.calendar-day.repeat::after {
+  background: #FF6B6B;
+  width: 8px;
+  height: 8px;
+}
+
+.ootd-list {
+  margin: 16px;
+}
+.ootd-list .card {
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.ootd-card-inner {
+  display: flex;
+  padding: 16px;
+  gap: 14px;
+}
+.ootd-card-inner .ootd-thumb {
+  width: 80px;
+  height: 100px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.ootd-card-inner .ootd-thumb svg { width: 24px; height: 24px; stroke: var(--border); fill: none; stroke-width: 1.2; }
+.ootd-card-inner .ootd-info { flex: 1; }
+.ootd-card-inner .ootd-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.ootd-card-inner .ootd-mood {
+  font-size: 14px;
+  margin-top: 6px;
+}
+.ootd-card-inner .ootd-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.ootd-card-inner .ootd-tags .tag {
+  font-size: 11px;
+  padding: 4px 10px;
+}
+.ootd-card-inner .ootd-items {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.ootd-card-inner .ootd-items .mini-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+/* ========== OOTD 记录页 ========== */
+.record-page-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.record-page-header .back-btn {
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.record-page-header h2 { font-size: 18px; font-weight: 600; }
+
+.record-photo-area {
+  margin: 16px;
+}
+.record-photo-area .upload-area {
+  background: var(--card);
+  border-radius: var(--radius);
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.record-photo-area .upload-area:active { transform: scale(0.98); }
+.record-photo-area .upload-area svg { width: 48px; height: 48px; stroke: var(--text-light); fill: none; stroke-width: 1.2; }
+.record-photo-area .upload-area p { font-size: 15px; color: var(--text-secondary); margin-top: 12px; }
+
+.record-mood {
+  margin: 16px;
+}
+.record-mood .card { padding: 20px; }
+.record-mood .mood-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.record-tags {
+  margin: 16px;
+}
+.record-tags .card { padding: 20px; }
+.record-tags .tag-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.record-link-items {
+  margin: 16px;
+}
+.record-link-items .card { padding: 20px; }
+.record-link-items .linked-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.linked-item {
+  aspect-ratio: 1;
+  border-radius: var(--radius-xs);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+.linked-item.selected { border-color: var(--accent); }
+.linked-item svg { width: 24px; height: 24px; stroke: var(--text-light); fill: none; stroke-width: 1.2; }
+.linked-item .linked-color {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  font-size: 10px;
+  color: white;
+  background: rgba(0,0,0,0.3);
+}
+
+/* ========== 单品详情页 ========== */
+.detail-photo {
+  margin: 16px;
+  height: 300px;
+  background: var(--card);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+}
+.detail-photo svg { width: 64px; height: 64px; stroke: var(--border); fill: none; stroke-width: 1.0; }
+
+.detail-info {
+  margin: 16px;
+}
+.detail-info .card { padding: 20px; }
+.detail-info .detail-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.detail-info .detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.detail-info .detail-row:last-child { border-bottom: none; }
+.detail-info .detail-row .label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.detail-info .detail-row .value {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.detail-history {
+  margin: 16px;
+}
+.detail-history .card { padding: 20px; }
+.detail-history .history-list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.detail-history .history-list::-webkit-scrollbar { display: none; }
+.history-thumb {
+  width: 60px;
+  height: 80px;
+  border-radius: var(--radius-xs);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.history-thumb svg { width: 20px; height: 20px; stroke: var(--text-light); fill: none; stroke-width: 1.2; }
+.history-thumb .history-date {
+  font-size: 10px;
+  color: var(--text-light);
+}
+
+.detail-stats {
+  margin: 16px;
+}
+.detail-stats .card { padding: 20px; text-align: center; }
+.detail-stats .stat-big {
+  font-size: 36px;
+  font-weight: 700;
+}
+.detail-stats .stat-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ========== 色彩搭配库 ========== */
+.color-page-header {
+  padding: 20px 16px 8px;
+}
+.color-page-header h1 { font-size: 24px; font-weight: 700; }
+
+.color-picker-section {
+  margin: 16px;
+}
+.color-picker-section .card { padding: 20px; }
+.color-dots-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  justify-items: center;
+}
+.color-dot-item {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+  border: 3px solid transparent;
+}
+.color-dot-item:active { transform: scale(0.9); }
+.color-dot-item.selected {
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+.color-dot-item .color-dot-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.color-match-section {
+  margin: 16px;
+}
+.color-match-section .card { padding: 20px; }
+.color-match-section .match-header {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-match-section .match-header .base-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+.match-group {
+  margin-bottom: 16px;
+}
+.match-group:last-child { margin-bottom: 0; }
+.match-group .match-type {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.match-colors {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.match-color {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: transform 0.15s;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+}
+.match-color:active { transform: scale(0.9); }
+.match-color span {
+  font-size: 10px;
+  color: white;
+  background: rgba(0,0,0,0.3);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ========== 动画天气备选 ========== */
+.weather-rain .weather-hero {
+  background: linear-gradient(135deg, #E3EDF7 0%, #C5D3E8 30%, #B8C9DB 60%, #FFF 100%);
+}
+.weather-rain .rain-drop {
+  position: absolute;
+  width: 3px;
+  height: 20px;
+  background: rgba(100,150,200,0.4);
+  border-radius: 0 0 3px 3px;
+  animation: rainFall 1s linear infinite;
+}
+@keyframes rainFall {
+  from { transform: translateY(-20px); opacity: 0; }
+  50% { opacity: 1; }
+  to { transform: translateY(120px); opacity: 0; }
+}
+
+/* ========== 页面标题 ========== */
+.page-title-bar {
+  padding: 20px 16px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 首页 — 今日提示 ===== -->
+<div id="page-home" class="page active">
+  <!-- 天气区 -->
+  <div class="weather-hero">
+    <div class="weather-icon">
+      <svg viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="12" fill="#FFD93D"/>
+        <g stroke="#FFD93D" stroke-width="3" stroke-linecap="round">
+          <line x1="32" y1="8" x2="32" y2="14"/>
+          <line x1="32" y1="50" x2="32" y2="56"/>
+          <line x1="8" y1="32" x2="14" y2="32"/>
+          <line x1="50" y1="32" x2="56" y2="32"/>
+          <line x1="15.86" y1="15.86" x2="20.14" y2="20.14"/>
+          <line x1="43.86" y1="43.86" x2="48.14" y2="48.14"/>
+          <line x1="15.86" y1="48.14" x2="20.14" y2="43.86"/>
+          <line x1="43.86" y1="20.14" x2="48.14" y2="15.86"/>
+        </g>
+        <circle cx="32" cy="32" r="12" stroke="#FFD93D" stroke-width="2" fill="none"/>
+      </svg>
+    </div>
+    <div class="weather-info">
+      <div class="location">北京 · 朝阳区</div>
+      <div class="temp">26°</div>
+      <div class="temp-desc">多云 · 体感24° · 微风</div>
+    </div>
+  </div>
+
+  <!-- 今日穿搭灵感 -->
+  <div class="outfit-inspiration">
+    <div class="card">
+      <div class="inspiration-header">
+        <h3>今日穿搭灵感</h3>
+      </div>
+      <div class="outfit-preview-empty">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <p>先添加几件衣服到衣橱</p>
+          <p style="font-size:12px;color:var(--text-light)">就能获得每日穿搭推荐</p>
+        </div>
+      </div>
+      <div class="inspiration-actions">
+        <button class="btn-primary" onclick="navigateTo('page-wardrobe')">开始添加</button>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <!-- 快捷入口 -->
+  <div class="quick-actions">
+    <div class="quick-action" onclick="navigateTo('page-record')">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span>拍OOTD</span>
+    </div>
+    <div class="quick-action" onclick="navigateTo('page-wardrobe')">
+      <svg viewBox="0 0 24 24"><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/><line x1="3" y1="7" x2="21" y2="7"/><path d="M12 7v13"/><path d="M3 7l4-4h10l4 4"/></svg>
+      <span>衣橱</span>
+    </div>
+    <div class="quick-action" onclick="navigateTo('page-color')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="3" fill="currentColor"/><circle cx="8" cy="14" r="3" fill="currentColor"/><circle cx="16" cy="14" r="3" fill="currentColor"/></svg>
+      <span>配色</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 衣橱页 ===== -->
+<div id="page-wardrobe" class="page">
+  <div class="wardrobe-header">
+    <h1>衣橱</h1>
+    <button class="add-btn" onclick="navigateTo('page-add')">+</button>
+  </div>
+
+  <!-- 分类标签 -->
+  <div class="wardrobe-cats">
+    <div class="cat-tab active" data-cat="all">全部</div>
+    <div class="cat-tab" data-cat="top">上衣</div>
+    <div class="cat-tab" data-cat="bottom">下装</div>
+    <div class="cat-tab" data-cat="shoes">鞋子</div>
+  </div>
+
+  <!-- 搭配预览区 -->
+  <div class="outfit-preview-zone">
+    <div class="section-title">搭配预览</div>
+    <div class="preview-stack">
+      <div class="preview-item" data-type="top">
+        <span class="preview-label">上衣</span>
+        <div class="preview-content" id="preview-top">
+          <div class="preview-empty">点击选择上衣</div>
+        </div>
+      </div>
+      <div class="preview-item" data-type="bottom">
+        <span class="preview-label">下装</span>
+        <div class="preview-content" id="preview-bottom">
+          <div class="preview-empty">点击选择下装</div>
+        </div>
+      </div>
+      <div class="preview-item" data-type="shoes">
+        <span class="preview-label">鞋子</span>
+        <div class="preview-content" id="preview-shoes">
+          <div class="preview-empty">点击选择鞋子</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 单品列表 -->
+  <div class="wardrobe-list" id="wardrobe-list">
+    <!-- 上衣 -->
+    <div class="wardrobe-section" data-cat="top">
+      <div class="section-title">上衣</div>
+      <div class="item-row">
+        <div class="add-item-card" onclick="navigateTo('page-add')">
+          <div class="add-item-icon">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div class="add-item-text">添加上衣</div>
+        </div>
+      </div>
+    </div>
+    <!-- 下装 -->
+    <div class="wardrobe-section" data-cat="bottom">
+      <div class="section-title">下装</div>
+      <div class="item-row">
+        <div class="add-item-card" onclick="navigateTo('page-add')">
+          <div class="add-item-icon">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div class="add-item-text">添加下装</div>
+        </div>
+      </div>
+    </div>
+    <!-- 鞋子 -->
+    <div class="wardrobe-section" data-cat="shoes">
+      <div class="section-title">鞋子</div>
+      <div class="item-row">
+        <div class="add-item-card" onclick="navigateTo('page-add')">
+          <div class="add-item-icon">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div class="add-item-text">添加鞋子</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 衣橱录入页 ===== -->
+<div id="page-add" class="page">
+  <div class="add-page-header">
+    <div class="back-btn" onclick="navigateTo('page-wardrobe')">← 返回</div>
+    <h2>录入单品</h2>
+    <div class="skip-btn">跳过</div>
+  </div>
+
+  <!-- 拍照上传 -->
+  <div class="photo-upload">
+    <label class="upload-area" for="add-photo-input">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <p>拍照或选择照片</p>
+      <div class="hint">建议只保留衣服本体，背景越干净越好</div>
+      <input type="file" accept="image/*" id="add-photo-input" style="display:none" onchange="handleAddPhoto(this)">
+    </label>
+  </div>
+
+  <!-- 分类 -->
+  <div class="form-section">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">分类</label>
+        <div class="option-row">
+          <div class="option-btn selected">上衣</div>
+          <div class="option-btn">下装</div>
+          <div class="option-btn">外套</div>
+          <div class="option-btn">鞋子</div>
+          <div class="option-btn">配饰</div>
+          <div class="option-btn">包包</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">细分类（可选）</label>
+        <div class="option-row">
+          <div class="option-btn selected">T恤</div>
+          <div class="option-btn">衬衫</div>
+          <div class="option-btn">毛衣</div>
+          <div class="option-btn">卫衣</div>
+          <div class="option-btn">背心</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 颜色标注 -->
+  <div class="form-section">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">主色</label>
+        <div class="color-picker-grid">
+          <div class="color-dot selected" style="background:#F5F0EB"></div>
+          <div class="color-dot" style="background:#1A1A1A"></div>
+          <div class="color-dot" style="background:#888888"></div>
+          <div class="color-dot" style="background:#2C3E6B"></div>
+          <div class="color-dot" style="background:#8B7355"></div>
+          <div class="color-dot" style="background:#4CAF50"></div>
+          <div class="color-dot" style="background:#E91E63"></div>
+          <div class="color-dot" style="background:#FF9800"></div>
+          <div class="color-dot" style="background:#FFB800"></div>
+          <div class="color-dot" style="background:#9C27B0"></div>
+          <div class="color-dot" style="background:#00BCD4"></div>
+          <div class="color-dot" style="background:#795548"></div>
+          <div class="color-dot" style="background:#FF4444"></div>
+          <div class="color-dot" style="background:#3F51B5"></div>
+          <div class="color-dot" style="background:#C8B88A"></div>
+          <div class="color-dot" style="background:#D4C5A9"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">辅色（可选）</label>
+        <div class="color-picker-grid">
+          <div class="color-dot" style="background:#F5F0EB"></div>
+          <div class="color-dot" style="background:#1A1A1A"></div>
+          <div class="color-dot" style="background:#888888"></div>
+          <div class="color-dot" style="background:#2C3E6B"></div>
+          <div class="color-dot" style="background:#8B7355"></div>
+          <div class="color-dot" style="background:#4CAF50"></div>
+          <div class="color-dot" style="background:#E91E63"></div>
+          <div class="color-dot" style="background:#FF9800"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 季节与场景 -->
+  <div class="form-section">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">季节</label>
+        <div class="option-row">
+          <div class="option-btn selected">春</div>
+          <div class="option-btn selected">夏</div>
+          <div class="option-btn">秋</div>
+          <div class="option-btn">冬</div>
+          <div class="option-btn">四季</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">场景（可选）</label>
+        <div class="option-row">
+          <div class="option-btn selected">休闲</div>
+          <div class="option-btn">通勤</div>
+          <div class="option-btn">约会</div>
+          <div class="option-btn">运动</div>
+          <div class="option-btn">正式</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 保存 -->
+  <div class="save-bar">
+    <button class="btn-primary">保存到衣橱</button>
+  </div>
+</div>
+
+<!-- ===== 单品详情页 ===== -->
+<div id="page-detail" class="page">
+  <div class="add-page-header">
+    <div class="back-btn" onclick="navigateTo('page-wardrobe')">← 返回</div>
+    <h2>单品详情</h2>
+    <div class="skip-btn" style="color:var(--text-secondary)">编辑</div>
+  </div>
+
+  <div class="detail-photo">
+    <svg viewBox="0 0 24 24"><path d="M4 8 L20 8 L20 20 L4 20 Z M12 2 L12 8"/></svg>
+  </div>
+
+  <div class="detail-info">
+    <div class="card">
+      <div class="detail-name">白色T恤</div>
+      <div class="detail-row">
+        <span class="label">分类</span>
+        <span class="value">上衣 · T恤</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">主色</span>
+        <span class="value">
+          <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#F5F0EB;vertical-align:middle;margin-right:6px"></span>
+          米白
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="label">季节</span>
+        <span class="value">春 · 夏</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">场景</span>
+        <span class="value">休闲 · 通勤</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">录入日期</span>
+        <span class="value">2026-03-15</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-history">
+    <div class="card">
+      <div class="section-title">穿搭历史</div>
+      <div class="history-list">
+        <div class="history-thumb">
+          <div class="history-date">5/24</div>
+        </div>
+        <div class="history-thumb">
+          <div class="history-date">5/20</div>
+        </div>
+        <div class="history-thumb">
+          <div class="history-date">5/15</div>
+        </div>
+        <div class="history-thumb">
+          <div class="history-date">5/10</div>
+        </div>
+        <div class="history-thumb">
+          <div class="history-date">5/06</div>
+        </div>
+        <div class="history-thumb">
+          <div class="history-date">4/28</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OOTD 日历页 ===== -->
+<div id="page-ootd" class="page">
+  <div class="ootd-header">
+    <h1>OOTD</h1>
+    <button class="record-btn" onclick="navigateTo('page-record')">+ 记录</button>
+  </div>
+
+  <!-- 日历导航 -->
+  <div class="calendar-nav">
+    <div class="nav-arrow">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="month-label">2026年5月</div>
+    <div class="nav-arrow">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+
+  <!-- 日历网格 -->
+  <div class="calendar-grid">
+    <div class="calendar-weekdays">
+      <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+    </div>
+    <div class="calendar-days">
+      <!-- Week 1: May starts on Friday -->
+      <div class="calendar-day empty"></div>
+      <div class="calendar-day empty"></div>
+      <div class="calendar-day empty"></div>
+      <div class="calendar-day empty"></div>
+      <div class="calendar-day has-ootd" onclick="navigateTo('page-record')">1</div>
+      <div class="calendar-day has-ootd">2</div>
+      <div class="calendar-day normal">3</div>
+      <!-- Week 2 -->
+      <div class="calendar-day normal">4</div>
+      <div class="calendar-day has-ootd">5</div>
+      <div class="calendar-day normal">6</div>
+      <div class="calendar-day has-ootd">7</div>
+      <div class="calendar-day has-ootd">8</div>
+      <div class="calendar-day has-ootd">9</div>
+      <div class="calendar-day normal">10</div>
+      <!-- Week 3 -->
+      <div class="calendar-day has-ootd">11</div>
+      <div class="calendar-day normal">12</div>
+      <div class="calendar-day has-ootd">13</div>
+      <div class="calendar-day repeat">14</div>
+      <div class="calendar-day has-ootd">15</div>
+      <div class="calendar-day normal">16</div>
+      <div class="calendar-day has-ootd">17</div>
+      <!-- Week 4 -->
+      <div class="calendar-day normal">18</div>
+      <div class="calendar-day has-ootd">19</div>
+      <div class="calendar-day normal">20</div>
+      <div class="calendar-day has-ootd">21</div>
+      <div class="calendar-day has-ootd">22</div>
+      <div class="calendar-day normal">23</div>
+      <div class="calendar-day has-ootd">24</div>
+      <!-- Week 5 -->
+      <div class="calendar-day today">25</div>
+      <div class="calendar-day normal">26</div>
+      <div class="calendar-day normal">27</div>
+      <div class="calendar-day normal">28</div>
+      <div class="calendar-day normal">29</div>
+      <div class="calendar-day normal">30</div>
+      <div class="calendar-day normal">31</div>
+    </div>
+  </div>
+
+  <!-- 近期OOTD列表 -->
+  <div class="section-title" style="padding:0 16px">近期穿搭</div>
+  <div class="ootd-list">
+    <div class="card">
+      <div class="ootd-card-inner">
+        <div class="ootd-thumb">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="ootd-info">
+          <div class="ootd-date">5月24日 · 周六</div>
+          <div class="ootd-mood">🔥 自信</div>
+          <div class="ootd-tags">
+            <span class="tag">休闲</span>
+            <span class="tag">周末</span>
+          </div>
+          <div class="ootd-items">
+            <div class="mini-color" style="background:#F5F0EB"></div>
+            <div class="mini-color" style="background:#2C3E6B"></div>
+            <div class="mini-color" style="background:#D4C5A9"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ootd-card-inner">
+        <div class="ootd-thumb">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="ootd-info">
+          <div class="ootd-date">5月22日 · 周四</div>
+          <div class="ootd-mood">😌 舒服</div>
+          <div class="ootd-tags">
+            <span class="tag">通勤</span>
+          </div>
+          <div class="ootd-items">
+            <div class="mini-color" style="background:#8B7355"></div>
+            <div class="mini-color" style="background:#1A1A1A"></div>
+            <div class="mini-color" style="background:#C8B88A"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ootd-card-inner">
+        <div class="ootd-thumb">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="ootd-info">
+          <div class="ootd-date">5月21日 · 周三</div>
+          <div class="ootd-mood">🧪 试错</div>
+          <div class="ootd-tags">
+            <span class="tag">约会</span>
+            <span class="tag">试新</span>
+          </div>
+          <div class="ootd-items">
+            <div class="mini-color" style="background:#9C27B0"></div>
+            <div class="mini-color" style="background:#1A1A1A"></div>
+            <div class="mini-color" style="background:#FF9800"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OOTD 记录页 ===== -->
+<div id="page-record" class="page">
+  <div class="record-page-header">
+    <div class="back-btn" onclick="navigateTo('page-ootd')">← 返回</div>
+    <h2>记录OOTD</h2>
+  </div>
+
+  <!-- 拍照 -->
+  <div class="record-photo-area">
+    <label class="upload-area" for="record-photo-input">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <p>拍一张今日穿搭</p>
+      <input type="file" accept="image/*" id="record-photo-input" style="display:none" onchange="handleRecordPhoto(this)">
+    </label>
+  </div>
+
+  <!-- 心情标注 -->
+  <div class="record-mood">
+    <div class="card">
+      <div class="section-title">心情（可选）</div>
+      <div class="mood-row">
+        <div class="mood-btn selected">🔥 自信</div>
+        <div class="mood-btn">😌 舒服</div>
+        <div class="mood-btn">😐 勉强</div>
+        <div class="mood-btn">🧪 试错</div>
+        <div class="mood-btn">😍 惊艳</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标签 -->
+  <div class="record-tags">
+    <div class="card">
+      <div class="section-title">标签（可选）</div>
+      <div class="tag-row">
+        <div class="tag selected">通勤</div>
+        <div class="tag">休闲</div>
+        <div class="tag">约会</div>
+        <div class="tag">运动</div>
+        <div class="tag">周末</div>
+        <div class="tag">旅行</div>
+        <div class="tag">正式</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 关联衣橱单品 -->
+  <div class="record-link-items">
+    <div class="card">
+      <div class="section-title">穿了哪些？（可选）</div>
+      <div class="linked-grid">
+        <div class="linked-item selected">
+          <div class="linked-color" style="background:#F5F0EB">白T</div>
+        </div>
+        <div class="linked-item selected">
+          <div class="linked-color" style="background:#2C3E6B">深蓝裤</div>
+        </div>
+        <div class="linked-item selected">
+          <div class="linked-color" style="background:#D4C5A9">帆布鞋</div>
+        </div>
+        <div class="linked-item">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="linked-item">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="linked-item">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="linked-item">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="linked-item">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 保存 -->
+  <div class="save-bar">
+    <button class="btn-primary">保存OOTD</button>
+  </div>
+</div>
+
+<!-- ===== 色彩搭配库 ===== -->
+<div id="page-color" class="page">
+  <div class="color-page-header">
+    <h1>色彩搭配</h1>
+  </div>
+
+  <!-- 颜色选择 -->
+  <div class="color-picker-section">
+    <div class="card">
+      <div class="section-title">选择主色</div>
+      <div class="color-dots-grid" id="color-dots-grid">
+        <!-- 12个颜色圆点由JS生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 配色方案 -->
+  <div class="color-match-section">
+    <div class="card">
+      <div class="match-header">
+        <div class="base-color" id="base-color"></div>
+        <span id="color-name">黄色搭配方案</span>
+      </div>
+      <div id="match-groups"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 底部导航 ===== -->
+<nav class="bottom-nav">
+  <div class="nav-item active" data-page="page-home">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>今日</span>
+  </div>
+  <div class="nav-item" data-page="page-wardrobe">
+    <svg viewBox="0 0 24 24"><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/><line x1="3" y1="7" x2="21" y2="7"/><path d="M12 7v13"/><path d="M3 7l4-4h10l4 4"/></svg>
+    <span>衣橱</span>
+  </div>
+  <div class="nav-item" data-page="page-ootd">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>OOTD</span>
+  </div>
+  <div class="nav-item" data-page="page-color">
+    <svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.488-1.15-.3-.303-.492-.704-.492-1.15 0-.926.746-1.648 1.688-1.648H16c3.038 0 5.5-2.462 5.5-5.5C21.5 6.5 17 2 12 2z"/></svg>
+    <span>配色</span>
+  </div>
+</nav>
+
+<script>
+// 页面导航
+function navigateTo(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+
+  // 更新底部导航
+  const navMap = {
+    'page-home': 'page-home',
+    'page-wardrobe': 'page-wardrobe',
+    'page-add': 'page-wardrobe',
+    'page-detail': 'page-wardrobe',
+    'page-ootd': 'page-ootd',
+    'page-record': 'page-ootd',
+    'page-color': 'page-color',
+  };
+  const activeNav = navMap[pageId] || pageId;
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.page === activeNav);
+  });
+
+  // 非主页面时隐藏底部导航的子页面
+  const subPages = ['page-add', 'page-detail', 'page-record'];
+  const nav = document.querySelector('.bottom-nav');
+  if (subPages.includes(pageId)) {
+    nav.style.display = 'none';
+  } else {
+    nav.style.display = 'flex';
+  }
+}
+
+// 底部导航点击
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    navigateTo(item.dataset.page);
+  });
+});
+
+// 分类按钮交互
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// 心情按钮交互
+document.querySelectorAll('.mood-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+// 标签交互
+document.querySelectorAll('.tag-row .tag').forEach(tag => {
+  tag.addEventListener('click', () => {
+    tag.classList.toggle('selected');
+  });
+});
+
+// 选项按钮交互
+document.querySelectorAll('.option-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const siblings = btn.parentElement.querySelectorAll('.option-btn');
+    siblings.forEach(s => s.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+// 颜色选择交互
+document.querySelectorAll('.color-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    const group = dot.parentElement;
+    group.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+    dot.classList.add('selected');
+  });
+});
+
+// 关联单品交互
+document.querySelectorAll('.linked-item').forEach(item => {
+  item.addEventListener('click', () => {
+    item.classList.toggle('selected');
+  });
+});
+
+// ===== 衣橱选择功能 =====
+const itemSvgs = {
+  top: '<svg viewBox="0 0 24 24"><path d="M4 8 L20 8 L20 20 L4 20 Z M12 2 L12 8"/></svg>',
+  bottom: '<svg viewBox="0 0 24 24"><path d="M4 12 L20 12 L18 20 L6 20 Z"/></svg>',
+  shoes: '<svg viewBox="0 0 24 24"><path d="M8 14 L16 14 L16 22 L8 22 Z M6 22 L18 22"/></svg>'
+};
+
+function selectItem(type, el, color, name) {
+  const previewEl = document.getElementById('preview-' + type);
+  previewEl.innerHTML = `<div class="preview-filled">
+    <div class="preview-img">${itemSvgs[type]}</div>
+    <div class="color-block" style="background:${color}"></div>
+    <div class="preview-name">${name}</div>
+  </div>`;
+  
+  // 更新选中状态
+  const siblings = el.parentElement.querySelectorAll('.item-card');
+  siblings.forEach(s => s.style.opacity = '0.5');
+  el.style.opacity = '1';
+}
+
+// 分类标签切换
+document.querySelectorAll('.cat-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    
+    const cat = tab.dataset.cat;
+    document.querySelectorAll('.wardrobe-section').forEach(section => {
+      if (cat === 'all' || section.dataset.cat === cat) {
+        section.style.display = 'block';
+      } else {
+        section.style.display = 'none';
+      }
+    });
+  });
+});
+
+// ===== 配色交互逻辑 =====
+const colorSchemes = {
+  '红色': { base: '#C62828', matches: ['#1A1A1A', '#F9D71C', '#F8BBD0', '#1A237E', '#FFFFFF', '#4CAF50', '#1976D2', '#8D6E63'] },
+  '橙色': { base: '#F57C00', matches: ['#4CAF50', '#1976D2', '#1A1A1A', '#FFFFFF', '#8D6E63', '#90CAF9', '#F9D71C', '#9E9E9E'] },
+  '黄色': { base: '#F9D71C', matches: ['#1A1A1A', '#8D6E63', '#1976D2', '#FFFFFF', '#F8BBD0', '#C62828', '#4CAF50', '#F57C00'] },
+  '绿色': { base: '#4CAF50', matches: ['#1976D2', '#F57C00', '#9C27B0', '#8D6E63', '#1A1A1A', '#F8BBD0', '#F9D71C', '#AED581'] },
+  '蓝色': { base: '#1976D2', matches: ['#1A1A1A', '#F8BBD0', '#4CAF50', '#9C27B0', '#F9D71C', '#FFFFFF', '#9E9E9E', '#C62828'] },
+  '紫色': { base: '#9C27B0', matches: ['#F8BBD0', '#9E9E9E', '#1A1A1A', '#1976D2', '#8D6E63', '#4CAF50', '#FFFFFF', '#F9D71C'] },
+  '粉色': { base: '#F8BBD0', matches: ['#8D6E63', '#1976D2', '#AED581', '#9C27B0', '#F9D71C', '#FFFFFF', '#1A1A1A', '#9E9E9E'] },
+  '棕色': { base: '#8D6E63', matches: ['#F9D71C', '#4CAF50', '#1976D2', '#F8BBD0', '#9C27B0', '#9E9E9E', '#1A1A1A', '#C62828'] },
+  '黑色': { base: '#1A1A1A', matches: ['#FFFFFF', '#9E9E9E', '#F8BBD0', '#1976D2', '#8D6E63', '#C62828', '#F5F0EB', '#F9D71C'] },
+  '灰色': { base: '#9E9E9E', matches: ['#F8BBD0', '#1976D2', '#8D6E63', '#FFFFFF', '#C62828', '#4CAF50', '#1A1A1A', '#F9D71C'] },
+  '米白': { base: '#F5F0EB', matches: ['#1A1A1A', '#8D6E63', '#1976D2', '#9C27B0', '#C62828', '#4CAF50', '#9E9E9E', '#F8BBD0'] },
+  '白色': { base: '#FFFFFF', matches: ['#1A1A1A', '#9E9E9E', '#1976D2', '#C62828', '#8D6E63', '#4CAF50', '#F8BBD0', '#F9D71C'] }
+};
+
+function initColorDots() {
+  const grid = document.getElementById('color-dots-grid');
+  let html = '';
+  for (const [name, data] of Object.entries(colorSchemes)) {
+    const borderStyle = (data.base === '#FFFFFF' || data.base === '#F5F0EB') ? 'box-shadow:inset 0 0 0 1px var(--border);' : '';
+    html += `<div class="color-dot-item" style="background:${data.base};${borderStyle}" onclick="pickColor('${name}', this)">
+      <span class="color-dot-label">${name}</span>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function pickColor(colorName, el) {
+  document.querySelectorAll('.color-dot-item').forEach(item => item.classList.remove('selected'));
+  el.classList.add('selected');
+  const scheme = colorSchemes[colorName];
+  document.getElementById('base-color').style.background = scheme.base;
+  document.getElementById('color-name').textContent = colorName + '搭配方案';
+  const matchGroupsEl = document.getElementById('match-groups');
+  let html = '<div class="match-group"><div class="match-type">搭配以下颜色</div><div class="match-colors">';
+  for (const color of scheme.matches) {
+    const borderAdd = (color === '#FFFFFF' || color === '#F5F0EB') ? ';border:1px solid var(--border)' : '';
+    html += `<div class="match-color" style="background:${color}${borderAdd}"></div>`;
+  }
+  html += '</div></div>';
+  matchGroupsEl.innerHTML = html;
+}
+
+// 拍照上传处理
+function handleAddPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const uploadArea = input.closest('.upload-area');
+      uploadArea.innerHTML = `<img src="${e.target.result}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius)">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function handleRecordPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const uploadArea = input.closest('.upload-area');
+      uploadArea.innerHTML = `<img src="${e.target.result}" style="width:100%;height:280px;object-fit:cover;border-radius:var(--radius)">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// 初始化
+initColorDots();
+pickColor('黄色', document.querySelector('.color-dot-item:nth-child(3)'));
+</script>
+
+</body>
+</html>

@@ -1351,42 +1351,7 @@ body {
 
   <!-- 单品列表 -->
   <div class="wardrobe-list" id="wardrobe-list">
-    <!-- 上衣 -->
-    <div class="wardrobe-section" data-cat="top">
-      <div class="section-title">上衣</div>
-      <div class="item-row">
-        <div class="add-item-card" onclick="navigateTo('page-add')">
-          <div class="add-item-icon">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </div>
-          <div class="add-item-text">添加上衣</div>
-        </div>
-      </div>
-    </div>
-    <!-- 下装 -->
-    <div class="wardrobe-section" data-cat="bottom">
-      <div class="section-title">下装</div>
-      <div class="item-row">
-        <div class="add-item-card" onclick="navigateTo('page-add')">
-          <div class="add-item-icon">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </div>
-          <div class="add-item-text">添加下装</div>
-        </div>
-      </div>
-    </div>
-    <!-- 鞋子 -->
-    <div class="wardrobe-section" data-cat="shoes">
-      <div class="section-title">鞋子</div>
-      <div class="item-row">
-        <div class="add-item-card" onclick="navigateTo('page-add')">
-          <div class="add-item-icon">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </div>
-          <div class="add-item-text">添加鞋子</div>
-        </div>
-      </div>
-    </div>
+    <!-- 由JS从localStorage渲染 -->
   </div>
 </div>
 
@@ -1413,23 +1378,23 @@ body {
     <div class="card">
       <div class="form-group">
         <label class="form-label">分类</label>
-        <div class="option-row">
-          <div class="option-btn selected">上衣</div>
-          <div class="option-btn">下装</div>
-          <div class="option-btn">外套</div>
-          <div class="option-btn">鞋子</div>
-          <div class="option-btn">配饰</div>
-          <div class="option-btn">包包</div>
+        <div class="option-row add-form-category">
+          <div class="option-btn selected" data-value="top">上衣</div>
+          <div class="option-btn" data-value="bottom">下装</div>
+          <div class="option-btn" data-value="outer">外套</div>
+          <div class="option-btn" data-value="shoes">鞋子</div>
+          <div class="option-btn" data-value="accessory">配饰</div>
+          <div class="option-btn" data-value="bag">包包</div>
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">细分类（可选）</label>
-        <div class="option-row">
-          <div class="option-btn selected">T恤</div>
-          <div class="option-btn">衬衫</div>
-          <div class="option-btn">毛衣</div>
-          <div class="option-btn">卫衣</div>
-          <div class="option-btn">背心</div>
+        <div class="option-row add-form-subcategory">
+          <div class="option-btn selected" data-value="T恤">T恤</div>
+          <div class="option-btn" data-value="衬衫">衬衫</div>
+          <div class="option-btn" data-value="毛衣">毛衣</div>
+          <div class="option-btn" data-value="卫衣">卫衣</div>
+          <div class="option-btn" data-value="背心">背心</div>
         </div>
       </div>
     </div>
@@ -1440,36 +1405,36 @@ body {
     <div class="card">
       <div class="form-group">
         <label class="form-label">主色</label>
-        <div class="color-picker-grid">
-          <div class="color-dot selected" style="background:#F5F0EB"></div>
-          <div class="color-dot" style="background:#1A1A1A"></div>
-          <div class="color-dot" style="background:#888888"></div>
-          <div class="color-dot" style="background:#2C3E6B"></div>
-          <div class="color-dot" style="background:#8B7355"></div>
-          <div class="color-dot" style="background:#4CAF50"></div>
-          <div class="color-dot" style="background:#E91E63"></div>
-          <div class="color-dot" style="background:#FF9800"></div>
-          <div class="color-dot" style="background:#FFB800"></div>
-          <div class="color-dot" style="background:#9C27B0"></div>
-          <div class="color-dot" style="background:#00BCD4"></div>
-          <div class="color-dot" style="background:#795548"></div>
-          <div class="color-dot" style="background:#FF4444"></div>
-          <div class="color-dot" style="background:#3F51B5"></div>
-          <div class="color-dot" style="background:#C8B88A"></div>
-          <div class="color-dot" style="background:#D4C5A9"></div>
+        <div class="color-picker-grid add-form-primary-color">
+          <div class="color-dot selected" data-value="#F5F0EB" style="background:#F5F0EB"></div>
+          <div class="color-dot" data-value="#1A1A1A" style="background:#1A1A1A"></div>
+          <div class="color-dot" data-value="#888888" style="background:#888888"></div>
+          <div class="color-dot" data-value="#2C3E6B" style="background:#2C3E6B"></div>
+          <div class="color-dot" data-value="#8B7355" style="background:#8B7355"></div>
+          <div class="color-dot" data-value="#4CAF50" style="background:#4CAF50"></div>
+          <div class="color-dot" data-value="#E91E63" style="background:#E91E63"></div>
+          <div class="color-dot" data-value="#FF9800" style="background:#FF9800"></div>
+          <div class="color-dot" data-value="#FFB800" style="background:#FFB800"></div>
+          <div class="color-dot" data-value="#9C27B0" style="background:#9C27B0"></div>
+          <div class="color-dot" data-value="#00BCD4" style="background:#00BCD4"></div>
+          <div class="color-dot" data-value="#795548" style="background:#795548"></div>
+          <div class="color-dot" data-value="#FF4444" style="background:#FF4444"></div>
+          <div class="color-dot" data-value="#3F51B5" style="background:#3F51B5"></div>
+          <div class="color-dot" data-value="#C8B88A" style="background:#C8B88A"></div>
+          <div class="color-dot" data-value="#D4C5A9" style="background:#D4C5A9"></div>
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">辅色（可选）</label>
-        <div class="color-picker-grid">
-          <div class="color-dot" style="background:#F5F0EB"></div>
-          <div class="color-dot" style="background:#1A1A1A"></div>
-          <div class="color-dot" style="background:#888888"></div>
-          <div class="color-dot" style="background:#2C3E6B"></div>
-          <div class="color-dot" style="background:#8B7355"></div>
-          <div class="color-dot" style="background:#4CAF50"></div>
-          <div class="color-dot" style="background:#E91E63"></div>
-          <div class="color-dot" style="background:#FF9800"></div>
+        <div class="color-picker-grid add-form-secondary-color">
+          <div class="color-dot" data-value="#F5F0EB" style="background:#F5F0EB"></div>
+          <div class="color-dot" data-value="#1A1A1A" style="background:#1A1A1A"></div>
+          <div class="color-dot" data-value="#888888" style="background:#888888"></div>
+          <div class="color-dot" data-value="#2C3E6B" style="background:#2C3E6B"></div>
+          <div class="color-dot" data-value="#8B7355" style="background:#8B7355"></div>
+          <div class="color-dot" data-value="#4CAF50" style="background:#4CAF50"></div>
+          <div class="color-dot" data-value="#E91E63" style="background:#E91E63"></div>
+          <div class="color-dot" data-value="#FF9800" style="background:#FF9800"></div>
         </div>
       </div>
     </div>
@@ -1480,30 +1445,40 @@ body {
     <div class="card">
       <div class="form-group">
         <label class="form-label">季节</label>
-        <div class="option-row">
-          <div class="option-btn selected">春</div>
-          <div class="option-btn selected">夏</div>
-          <div class="option-btn">秋</div>
-          <div class="option-btn">冬</div>
-          <div class="option-btn">四季</div>
+        <div class="option-row add-form-season">
+          <div class="option-btn selected" data-value="春">春</div>
+          <div class="option-btn selected" data-value="夏">夏</div>
+          <div class="option-btn" data-value="秋">秋</div>
+          <div class="option-btn" data-value="冬">冬</div>
+          <div class="option-btn" data-value="四季">四季</div>
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">场景（可选）</label>
-        <div class="option-row">
-          <div class="option-btn selected">休闲</div>
-          <div class="option-btn">通勤</div>
-          <div class="option-btn">约会</div>
-          <div class="option-btn">运动</div>
-          <div class="option-btn">正式</div>
+        <div class="option-row add-form-occasion">
+          <div class="option-btn selected" data-value="休闲">休闲</div>
+          <div class="option-btn" data-value="通勤">通勤</div>
+          <div class="option-btn" data-value="约会">约会</div>
+          <div class="option-btn" data-value="运动">运动</div>
+          <div class="option-btn" data-value="正式">正式</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 名称 -->
+  <div class="form-section">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">名称</label>
+        <input type="text" id="add-item-name" placeholder="例如：白色T恤、深蓝牛仔裤" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:14px;outline:none;background:var(--bg)">
       </div>
     </div>
   </div>
 
   <!-- 保存 -->
   <div class="save-bar">
-    <button class="btn-primary">保存到衣橱</button>
+    <button class="btn-primary" onclick="saveItem()">保存到衣橱</button>
   </div>
 </div>
 
@@ -2009,12 +1984,95 @@ function pickColor(colorName, el) {
 }
 
 // 拍照上传处理
+// ===== 数据持久化 =====
+const STORAGE_KEY = 'ootd_items';
+
+function getItems() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+}
+
+function saveItemsToStorage(items) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+function getSelectedValue(selector) {
+  const el = document.querySelector(selector + ' .option-btn.selected');
+  return el ? el.dataset.value : '';
+}
+
+function getSelectedColor(selector) {
+  const el = document.querySelector(selector + ' .color-dot.selected');
+  return el ? el.dataset.value : '';
+}
+
+function getSelectedMulti(selector) {
+  return Array.from(document.querySelectorAll(selector + ' .option-btn.selected')).map(el => el.dataset.value);
+}
+
+function saveItem() {
+  const name = document.getElementById('add-item-name').value.trim();
+  if (!name) { alert('请输入名称'); return; }
+  
+  const item = {
+    id: Date.now().toString(),
+    name,
+    category: getSelectedValue('.add-form-category'),
+    subCategory: getSelectedValue('.add-form-subcategory'),
+    primaryColor: getSelectedColor('.add-form-primary-color'),
+    secondaryColor: getSelectedColor('.add-form-secondary-color'),
+    seasons: getSelectedMulti('.add-form-season'),
+    occasions: getSelectedMulti('.add-form-occasion'),
+    photo: window._addPhotoData || null,
+    createdAt: new Date().toISOString()
+  };
+  
+  const items = getItems();
+  items.push(item);
+  saveItemsToStorage(items);
+  window._addPhotoData = null;
+  document.getElementById('add-item-name').value = '';
+  navigateTo('page-wardrobe');
+  renderWardrobe();
+}
+
+const catLabels = { top: '上衣', bottom: '下装', outer: '外套', shoes: '鞋子', accessory: '配饰', bag: '包包' };
+
+function renderWardrobe() {
+  const items = getItems();
+  const listEl = document.getElementById('wardrobe-list');
+  const cats = ['top', 'bottom', 'outer', 'shoes', 'accessory', 'bag'];
+  let html = '';
+  
+  for (const cat of cats) {
+    const catItems = items.filter(i => i.category === cat);
+    const label = catLabels[cat];
+    html += `<div class="wardrobe-section" data-cat="${cat}">
+      <div class="section-title">${label}${catItems.length ? ' · ' + catItems.length + '件' : ''}</div>
+      <div class="item-row">`;
+    
+    html += `<div class="add-item-card" onclick="navigateTo('page-add')">
+      <div class="add-item-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+      <div class="add-item-text">添加${label}</div>
+    </div>`;
+    
+    for (const item of catItems) {
+      html += `<div class="item-card" onclick="selectItem('${item.category}', this, '${item.primaryColor}', '${item.name}')">
+        ${item.photo ? `<div class="item-card-img" style="background:none;padding:0;overflow:hidden"><img src="${item.photo}" style="width:100%;height:70px;object-fit:cover"></div>` : `<div class="item-card-img"><svg viewBox="0 0 24 24"><path d="M4 8 L20 8 L20 20 L4 20 Z M12 2 L12 8"/></svg></div>`}
+        <div class="item-card-color" style="background:${item.primaryColor}"></div>
+        <div class="item-card-name">${item.name}</div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+  listEl.innerHTML = html;
+}
+
 function handleAddPhoto(input) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      const uploadArea = input.closest('.upload-area');
-      uploadArea.innerHTML = `<img src="${e.target.result}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius)">`;
+      window._addPhotoData = e.target.result;
+      input.closest('.upload-area').innerHTML = `<img src="${e.target.result}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius)">`;
     };
     reader.readAsDataURL(input.files[0]);
   }
@@ -2024,8 +2082,7 @@ function handleRecordPhoto(input) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      const uploadArea = input.closest('.upload-area');
-      uploadArea.innerHTML = `<img src="${e.target.result}" style="width:100%;height:280px;object-fit:cover;border-radius:var(--radius)">`;
+      input.closest('.upload-area').innerHTML = `<img src="${e.target.result}" style="width:100%;height:280px;object-fit:cover;border-radius:var(--radius)">`;
     };
     reader.readAsDataURL(input.files[0]);
   }
@@ -2034,6 +2091,7 @@ function handleRecordPhoto(input) {
 // 初始化
 initColorDots();
 pickColor('黄色', document.querySelector('.color-dot-item:nth-child(3)'));
+renderWardrobe();
 </script>
 
 </body>

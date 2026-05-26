@@ -1610,19 +1610,22 @@ body {
   </div>
 
   <!-- 今日穿搭灵感 -->
-  <div class="outfit-inspiration">
+  <div class="outfit-inspiration" id="outfit-inspiration">
     <div class="card">
       <div class="inspiration-header">
         <h3>今日穿搭灵感</h3>
+        <div class="refresh-btn" onclick="refreshInspiration()">换一套</div>
       </div>
-      <div class="outfit-preview-empty">
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <p>先添加几件衣服到衣橱</p>
-          <p style="font-size:12px;color:var(--text-light)">就能获得每日穿搭推荐</p>
+      <div id="inspiration-content">
+        <div class="outfit-preview-empty">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <p>先添加几件衣服到衣橱</p>
+            <p style="font-size:12px;color:var(--text-light)">就能获得每日穿搭推荐</p>
+          </div>
         </div>
       </div>
-      <div class="inspiration-actions">
+      <div class="inspiration-actions" id="inspiration-actions">
         <button class="btn-primary" onclick="navigateTo('page-wardrobe')">开始添加</button>
       </div>
     </div>
@@ -1790,6 +1793,14 @@ body {
           <div class="color-dot" data-value="#3F51B5" style="background:#3F51B5" onclick="selectColorDot(this)"></div>
           <div class="color-dot" data-value="#C8B88A" style="background:#C8B88A" onclick="selectColorDot(this)"></div>
           <div class="color-dot" data-value="#D4C5A9" style="background:#D4C5A9" onclick="selectColorDot(this)"></div>
+        </div>
+        <!-- 自定义颜色（可选） -->
+        <div class="custom-color-row" style="margin-top:8px">
+          <div class="hue-slider-row">
+            <input type="range" min="0" max="360" value="0" class="hue-slider" id="hue-slider" oninput="updateCustomColor(this.value)" style="flex:1">
+            <div class="custom-color-preview" id="custom-color-preview" style="background:#FF0000;width:28px;height:28px;border-radius:50%;border:1px solid var(--border);margin:0 8px"></div>
+            <button class="btn-secondary" style="padding:4px 10px;font-size:11px;width:auto" onclick="useCustomColor()">选这个色</button>
+          </div>
         </div>
       </div>
       <div class="form-group">
@@ -2136,6 +2147,11 @@ body {
         <span id="color-name">黄色搭配方案</span>
       </div>
       <div id="match-groups"></div>
+      <!-- 衣橱中匹配的单品 -->
+      <div class="match-group" id="wardrobe-match" style="display:none">
+        <div class="match-type">你的衣橱里有</div>
+        <div id="wardrobe-match-items"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2229,15 +2245,21 @@ function renderPreviewScroll(type) {
     const div = document.createElement('div');
     div.className = 'preview-scroll-item';
     div.dataset.itemId = item.id;
-    div.onclick = () => selectPreviewItemDirect(type, item.id, item.primaryColor, item.name);
     
     if (item.hasPhoto) {
-      div.innerHTML = `<img id="preview-img-${type}-${item.id}" style="display:none">`;
+      div.innerHTML = `<img id="preview-img-${type}-${item.id}" style="width:100%;height:100%;object-fit:cover">`;
       getImage(item.id).then(data => {
         const img = document.getElementById('preview-img-' + type + '-' + item.id);
         if (img && data) {
           img.src = data;
-          img.style.display = 'block';
+        } else {
+          // 没有图片数据时显示颜色+名称
+          img.parentElement.innerHTML = `
+            <div class="item-placeholder">
+              <div class="dot" style="background:${item.primaryColor}"></div>
+              <div class="name">${item.name}</div>
+            </div>
+          `;
         }
       });
     } else {
@@ -2249,6 +2271,9 @@ function renderPreviewScroll(type) {
       `;
     }
     scrollEl.appendChild(div);
+    
+    // 绑定长按删除
+    setupLongPress(div, (e) => showDeleteBtn(div, item.id, 'item', e));
   }
 }
 
@@ -2452,11 +2477,24 @@ function pickColor(colorName, el) {
   }
   html += '</div></div>';
   matchGroupsEl.innerHTML = html;
+  updateWardrobeMatch();
 }
 
 // 拍照上传处理
 // ===== 预览区点击选择 =====
 function goToAddItem(category) {
+  // 清除上次录入的残留数据
+  window._addPhotoData = null;
+  document.getElementById('add-item-name').value = '';
+  // 重置照片上传区
+  const uploadArea = document.querySelector('.photo-upload .upload-area');
+  if (uploadArea) {
+    uploadArea.innerHTML = `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <p>拍照或选择照片</p>
+      <div class="hint">建议只保留衣服本体，背景越干净越好</div>
+      <input type="file" accept="image/*" id="add-photo-input" style="display:none" onchange="handleAddPhoto(this)">`;
+  }
+  
   navigateTo('page-add');
   // 设置分类为对应类型
   const catBtns = document.querySelectorAll('.add-form-category .option-btn');
@@ -2564,6 +2602,7 @@ function deleteItem(id, event) {
   saveItemsToStorage(items);
   deleteImage(id);
   renderWardrobe();
+  initPreviewScrolls();
 }
 
 // 删除OOTD记录
@@ -2581,6 +2620,11 @@ function getSelectedValue(selector) {
 }
 
 function getSelectedColor(selector) {
+  if (window._selectedCustomColor && selector === '.add-form-primary-color') {
+    const color = window._selectedCustomColor;
+    window._selectedCustomColor = null;
+    return color;
+  }
   const el = document.querySelector(selector + ' .color-dot.selected');
   return el ? el.dataset.value : '';
 }
@@ -2619,62 +2663,247 @@ function saveItem() {
   document.getElementById('add-item-name').value = '';
   navigateTo('page-wardrobe');
   renderWardrobe();
+  initPreviewScrolls();
+  checkStorage();
+}
+
+
+// ===== 优化1: 首页穿搭灵感 =====
+function refreshInspiration() {
+  const items = getItems();
+  const tops = items.filter(i => i.category === 'top');
+  const bottoms = items.filter(i => i.category === 'bottom');
+  const shoes = items.filter(i => i.category === 'shoes');
+  const outers = items.filter(i => i.category === 'outer');
+  
+  if (tops.length === 0 && bottoms.length === 0 && shoes.length === 0) {
+    // 没有衣服，显示空状态
+    document.getElementById('inspiration-content').innerHTML = `
+      <div class="outfit-preview-empty">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <p>先添加几件衣服到衣橱</p>
+          <p style="font-size:12px;color:var(--text-light)">就能获得每日穿搭推荐</p>
+        </div>
+      </div>`;
+    document.getElementById('inspiration-actions').innerHTML = `<button class="btn-primary" onclick="navigateTo('page-wardrobe')">开始添加</button>`;
+    return;
+  }
+  
+  // 随机选一套
+  const randomTop = tops.length ? tops[Math.floor(Math.random() * tops.length)] : null;
+  const randomBottom = bottoms.length ? bottoms[Math.floor(Math.random() * bottoms.length)] : null;
+  const randomShoes = shoes.length ? shoes[Math.floor(Math.random() * shoes.length)] : null;
+  const randomOuter = outers.length ? outers[Math.floor(Math.random() * outers.length)] : null;
+  
+  let html = '<div class="inspiration-outfit">';
+  
+  const types = [
+    { item: randomOuter, label: '外套' },
+    { item: randomTop, label: '上衣' },
+    { item: randomBottom, label: '下装' },
+    { item: randomShoes, label: '鞋子' }
+  ];
+  
+  for (const t of types) {
+    if (t.item) {
+      html += `<div class="inspiration-item" data-item-id="${t.item.id}">`;
+      if (t.item.hasPhoto) {
+        html += `<img id="inspiration-img-${t.item.id}" style="display:none">`;
+        getImage(t.item.id).then(data => {
+          const img = document.getElementById('inspiration-img-' + t.item.id);
+          if (img && data) img.src = data;
+          if (img) img.style.display = 'block';
+        });
+      } else {
+        html += `<div class="inspiration-placeholder"><div class="dot" style="background:${t.item.primaryColor}"></div><div class="name">${t.item.name}</div></div>`;
+      }
+      html += `<div class="inspiration-item-label">${t.label}</div></div>`;
+    }
+  }
+  
+  html += '</div>';
+  document.getElementById('inspiration-content').innerHTML = html;
+  document.getElementById('inspiration-actions').innerHTML = `<button class="btn-primary" onclick="navigateTo('page-wardrobe')">去衣橱看看</button>`;
+}
+
+// ===== 优化2: 配色页衣橱联动 =====
+function updateWardrobeMatch() {
+  const selectedDot = document.querySelector('.color-dot-item.selected');
+  if (!selectedDot) return;
+  
+  const colorName = selectedDot.querySelector('.color-dot-label').textContent;
+  const scheme = colorSchemes[colorName];
+  if (!scheme) return;
+  
+  const matchColors = scheme.matches;
+  const items = getItems();
+  const matchingItems = items.filter(i => {
+    // 检查主色或辅色是否在搭配色列表中
+    return matchColors.some(c => {
+      return colorsSimilar(i.primaryColor, c) || (i.secondaryColor && colorsSimilar(i.secondaryColor, c));
+    });
+  });
+  
+  const matchEl = document.getElementById('wardrobe-match');
+  const itemsEl = document.getElementById('wardrobe-match-items');
+  
+  if (matchingItems.length === 0) {
+    matchEl.style.display = 'none';
+    return;
+  }
+  
+  matchEl.style.display = 'block';
+  let html = '';
+  for (const item of matchingItems) {
+    html += `<div class="wardrobe-match-item" onclick="navigateTo('page-wardrobe')">
+      <div class="mini-color" style="background:${item.primaryColor}"></div>
+      ${catLabels[item.category]} · ${item.name}
+    </div>`;
+  }
+  itemsEl.innerHTML = html;
+}
+
+// 简化颜色相似度判断
+function colorsSimilar(c1, c2) {
+  if (!c1 || !c2) return false;
+  // 直接匹配hex
+  if (c1.toLowerCase() === c2.toLowerCase()) return true;
+  // 宽松匹配：RGB各通道差<50
+  const rgb1 = hexToRgb(c1);
+  const rgb2 = hexToRgb(c2);
+  if (!rgb1 || !rgb2) return false;
+  return Math.abs(rgb1.r - rgb2.r) < 50 && Math.abs(rgb1.g - rgb2.g) < 50 && Math.abs(rgb1.b - rgb2.b) < 50;
+}
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+}
+
+// ===== 优化3: 自定义颜色滑块 =====
+let _customColor = '#FF0000';
+
+function updateCustomColor(hue) {
+  // HSL to hex
+  const h = parseInt(hue);
+  const s = 70;
+  const l = 50;
+  _customColor = hslToHex(h, s, l);
+  document.getElementById('custom-color-preview').style.background = _customColor;
+}
+
+function useCustomColor() {
+  // Find which color picker grid is active (primary or secondary)
+  // Default to primary
+  const dots = document.querySelectorAll('.add-form-primary-color .color-dot');
+  dots.forEach(d => d.classList.remove('selected'));
+  // Add custom color as selected value
+  window._selectedCustomColor = _customColor;
+  // Update the preview
+  document.getElementById('custom-color-preview').style.border = '2px solid var(--accent)';
+  setTimeout(() => {
+    document.getElementById('custom-color-preview').style.border = '1px solid var(--border)';
+  }, 500);
+}
+
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return '#' + f(0) + f(8) + f(4);
+}
+
+// ===== 优化4: 细分类改为可选tag =====
+// (Already done via HTML - subcategory stays optional)
+
+// ===== 优化5: OOTD记录自动带入预览区选中的单品 =====
+function autoLinkSelectedItems() {
+  // 从预览区收集已选中的单品
+  const selectedItems = [];
+  document.querySelectorAll('.preview-scroll-item.selected').forEach(el => {
+    const id = el.dataset.itemId;
+    if (id) {
+      const item = getItems().find(i => i.id === id);
+      if (item) selectedItems.push(item);
+    }
+  });
+  
+  // 在OOTD记录页的"穿了哪些"中自动选中
+  if (selectedItems.length > 0) {
+    const linkedItems = document.querySelectorAll('.linked-item');
+    linkedItems.forEach(el => {
+      const itemId = el.dataset.itemId;
+      if (selectedItems.some(s => s.id === itemId)) {
+        el.classList.add('selected');
+      }
+    });
+  }
 }
 
 const catLabels = { top: '上衣', bottom: '下装', outer: '外套', shoes: '鞋子', accessory: '配饰', bag: '包包' };
 
-// 显示/隐藏删除按钮（支持长按和右键）
+// 长按删除 — 直接弹确认框
 function showDeleteBtn(el, id, type, event) {
   event.preventDefault();
-  // 隐藏其他删除按钮
-  document.querySelectorAll('.item-delete-btn, .ootd-delete-btn').forEach(b => b.style.display = 'none');
-  // 显示当前删除按钮
-  const btn = el.querySelector('.item-delete-btn, .ootd-delete-btn');
-  if (btn) btn.style.display = 'block';
-  // 点击其他地方隐藏
-  setTimeout(() => {
-    document.addEventListener('click', function hideDeleteBtns() {
-      document.querySelectorAll('.item-delete-btn, .ootd-delete-btn').forEach(b => b.style.display = 'none');
-      document.removeEventListener('click', hideDeleteBtns);
-    });
-  }, 10);
+  if (type === 'item') {
+    if (confirm('确定删除这件单品吗？')) {
+      const items = getItems().filter(i => i.id !== id);
+      saveItemsToStorage(items);
+      deleteImage(id);
+      renderWardrobe();
+      initPreviewScrolls();
+    }
+  } else if (type === 'ootd') {
+    if (confirm('确定删除这条OOTD记录吗？')) {
+      const records = getOOTDs().filter(r => r.id !== id);
+      saveOOTDs(records);
+      deleteImage(id);
+      renderOOTDList();
+    }
+  }
 }
 
-// 手机端长按支持
+// 手机端长按支持 — 用inline方式绑定
 function setupLongPress(element, callback) {
   let timer = null;
   let startX = 0, startY = 0;
+  let moved = false;
   
-  const start = function(e) {
-    startX = e.touches ? e.touches[0].clientX : e.clientX;
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-    timer = setTimeout(() => {
-      callback(e);
-    }, 600);
-  };
-  
-  const end = function(e) {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  };
-  
-  const move = function(e) {
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
+  element.addEventListener('touchstart', function(e) {
+    moved = false;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    timer = setTimeout(function() {
+      if (!moved) {
+        callback(e);
       }
-    }
-  };
+    }, 500);
+  }, { passive: true });
   
-  element.addEventListener('touchstart', start, { passive: true });
-  element.addEventListener('touchend', end);
-  element.addEventListener('touchmove', move, { passive: true });
-  element.addEventListener('contextmenu', (e) => { e.preventDefault(); callback(e); });
+  element.addEventListener('touchmove', function(e) {
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    if (Math.abs(x - startX) > 5 || Math.abs(y - startY) > 5) {
+      moved = true;
+      if (timer) { clearTimeout(timer); timer = null; }
+    }
+  }, { passive: true });
+  
+  element.addEventListener('touchend', function(e) {
+    if (timer) { clearTimeout(timer); timer = null; }
+  });
+  
+  // 桌面端右键菜单
+  element.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    callback(e);
+  });
 }
 
 function handleAddPhoto(input) {
@@ -3010,6 +3239,42 @@ function initWeather() {
   }
 }
 
+// ===== 存储空间监控 =====
+function checkStorage() {
+  if (navigator.storage && navigator.storage.estimate) {
+    navigator.storage.estimate().then(function(estimate) {
+      const used = estimate.usage || 0;
+      const total = estimate.quota || 0;
+      const usedMB = Math.round(used / 1024 / 1024);
+      const totalMB = Math.round(total / 1024 / 1024);
+      const percent = total > 0 ? Math.round((used / total) * 100) : 0;
+      
+      // 估算照片数量
+      const items = getItems();
+      const records = getOOTDs();
+      const photoItems = items.filter(i => i.hasPhoto).length + records.filter(r => r.hasPhoto).length;
+      
+      console.log('存储: 已用' + usedMB + 'MB / 总' + totalMB + 'MB (' + percent + '%), 照片' + photoItems + '张');
+      
+      // iOS通常quota约1GB，超过80%就提醒
+      if (percent > 80 || (totalMB > 0 && totalMB < 1500 && usedMB > totalMB * 0.8)) {
+        alert('⚠️ 存储空间已用 ' + percent + '%（' + usedMB + 'MB / ' + totalMB + 'MB）\n\n照片数: ' + photoItems + ' 张\n\n建议删除不需要的单品或OOTD记录，避免数据丢失。');
+      }
+    });
+  } else {
+    // 不支持estimate的浏览器，用图片数量估算
+    const items = getItems();
+    const records = getOOTDs();
+    const photoItems = items.filter(i => i.hasPhoto).length + records.filter(r => r.hasPhoto).length;
+    
+    // 假设每张300KB，iOS约1GB上限
+    const estimatedMB = photoItems * 0.3;
+    if (estimatedMB > 800) {
+      alert('⚠️ 已存储 ' + photoItems + ' 张照片（估算约 ' + Math.round(estimatedMB) + 'MB）\n\n接近存储上限，建议删除不需要的数据。');
+    }
+  }
+}
+
 // 初始化
 initColorDots();
 pickColor('黄色', document.querySelector('.color-dot-item:nth-child(3)'));
@@ -3019,6 +3284,8 @@ renderLinkedItems();
 initPreviewScrolls();
 initCalendar();
 initWeather();
+checkStorage();
+refreshInspiration();
 </script>
 
 </body>

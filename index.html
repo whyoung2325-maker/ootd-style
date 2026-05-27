@@ -287,6 +287,62 @@ body {
 .inspiration-actions .btn-primary { flex: 2; }
 .inspiration-actions .btn-secondary { flex: 1; }
 
+/* ========== 今日灵感搭配展示 ========== */
+.inspiration-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.refresh-btn {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 500;
+}
+.inspiration-outfit {
+  display: flex;
+  gap: 12px;
+  padding: 12px 20px;
+  justify-content: center;
+}
+.inspiration-item {
+  width: 80px;
+  text-align: center;
+}
+.inspiration-item img {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+.inspiration-placeholder {
+  width: 80px;
+  height: 100px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow);
+}
+.inspiration-placeholder .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+.inspiration-placeholder .name {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.inspiration-item-label {
+  font-size: 10px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
 .alternative-outfits {
   margin: 16px;
 }

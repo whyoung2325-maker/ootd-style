@@ -2726,98 +2726,23 @@ function saveItem() {
 
 // ===== 优化1: 首页穿搭灵感 =====
 function refreshInspiration() {
-  const items = getItems();
-  const tops = items.filter(i => i.category === 'top');
-  const bottoms = items.filter(i => i.category === 'bottom');
-  const shoes = items.filter(i => i.category === 'shoes');
-  const outers = items.filter(i => i.category === 'outer');
-  
-  if (tops.length === 0 && bottoms.length === 0 && shoes.length === 0) {
-    // 没有衣服，显示空状态
-    document.getElementById('inspiration-content').innerHTML = `
-      <div class="outfit-preview-empty">
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <p>先添加几件衣服到衣橱</p>
-          <p style="font-size:12px;color:var(--text-light)">就能获得每日穿搭推荐</p>
-        </div>
-      </div>`;
-    document.getElementById('inspiration-actions').innerHTML = `<button class="btn-primary" onclick="navigateTo('page-wardrobe')">开始添加</button>`;
-    return;
-  }
-  
-  // 随机选一套
-  const randomTop = tops.length ? tops[Math.floor(Math.random() * tops.length)] : null;
-  const randomBottom = bottoms.length ? bottoms[Math.floor(Math.random() * bottoms.length)] : null;
-  const randomShoes = shoes.length ? shoes[Math.floor(Math.random() * shoes.length)] : null;
-  const randomOuter = outers.length ? outers[Math.floor(Math.random() * outers.length)] : null;
-  
-  let html = '<div class="inspiration-outfit">';
-  
-  const types = [
-    { item: randomOuter, label: '外套' },
-    { item: randomTop, label: '上衣' },
-    { item: randomBottom, label: '下装' },
-    { item: randomShoes, label: '鞋子' }
-  ];
-  
-  for (const t of types) {
-    if (t.item) {
-      html += `<div class="inspiration-item" data-item-id="${t.item.id}">`;
-      if (t.item.hasPhoto) {
-        html += `<img id="inspiration-img-${t.item.id}" style="display:none">`;
-        getImage(t.item.id).then(data => {
-          const img = document.getElementById('inspiration-img-' + t.item.id);
-          if (img && data) img.src = data;
-          if (img) img.style.display = 'block';
-        });
-      } else {
-        html += `<div class="inspiration-placeholder"><div class="dot" style="background:${t.item.primaryColor}"></div><div class="name">${t.item.name}</div></div>`;
-      }
-      html += `<div class="inspiration-item-label">${t.label}</div></div>`;
-    }
-  }
-  
-  html += '</div>';
-  document.getElementById('inspiration-content').innerHTML = html;
-  document.getElementById('inspiration-actions').innerHTML = `<button class="btn-primary" onclick="navigateTo('page-wardrobe')">去衣橱看看</button>`;
+  // 恢复为空状态提示
+  document.getElementById('inspiration-content').innerHTML = `
+    <div class="outfit-preview-empty">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <p>先添加几件衣服到衣橱</p>
+        <p style="font-size:12px;color:var(--text-light)">就能获得每日穿搭推荐</p>
+      </div>
+    </div>`;
+  document.getElementById('inspiration-actions').innerHTML = `<button class="btn-primary" onclick="navigateTo('page-wardrobe')">开始添加</button>`;
 }
 
 // ===== 优化2: 配色页衣橱联动 =====
 function updateWardrobeMatch() {
-  const selectedDot = document.querySelector('.color-dot-item.selected');
-  if (!selectedDot) return;
-  
-  const colorName = selectedDot.querySelector('.color-dot-label').textContent;
-  const scheme = colorSchemes[colorName];
-  if (!scheme) return;
-  
-  const matchColors = scheme.matches;
-  const items = getItems();
-  const matchingItems = items.filter(i => {
-    // 检查主色或辅色是否在搭配色列表中
-    return matchColors.some(c => {
-      return colorsSimilar(i.primaryColor, c) || (i.secondaryColor && colorsSimilar(i.secondaryColor, c));
-    });
-  });
-  
+  // 禁用衣橱联动，直接隐藏
   const matchEl = document.getElementById('wardrobe-match');
-  const itemsEl = document.getElementById('wardrobe-match-items');
-  
-  if (matchingItems.length === 0) {
-    matchEl.style.display = 'none';
-    return;
-  }
-  
-  matchEl.style.display = 'block';
-  let html = '';
-  for (const item of matchingItems) {
-    html += `<div class="wardrobe-match-item" onclick="navigateTo('page-wardrobe')">
-      <div class="mini-color" style="background:${item.primaryColor}"></div>
-      ${catLabels[item.category]} · ${item.name}
-    </div>`;
-  }
-  itemsEl.innerHTML = html;
+  if (matchEl) matchEl.style.display = 'none';
 }
 
 // 简化颜色相似度判断
